@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اختبار بايثون التفاعلي - القوائم وصفوف البيانات</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#172033;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0;padding:18px}
+.wrap{max-width:850px;margin:auto}.hero{background:linear-gradient(135deg,#173b72,#2878a8);color:white;padding:25px;border-radius:18px;margin-bottom:18px}
+h1{font-size:25px;margin:0 0 8px}.hero p{margin:0;line-height:1.8}
+.card{background:white;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 4px 16px #14213d12}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font:inherit;background:white}
+button{border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:bold;cursor:pointer}
+.primary{background:#1769aa;color:white}.secondary{background:#e8eef6;color:#173b72}
+.qhead{display:flex;justify-content:space-between;gap:10px;color:#526176;font-size:14px;margin-bottom:12px}
+.question{font-size:18px;font-weight:bold;line-height:1.7;margin:8px 0 14px}
+.option{display:flex;align-items:flex-start;gap:10px;border:1px solid #dbe3ee;border-radius:10px;padding:11px;margin:8px 0;cursor:pointer;font-weight:normal}
+.option input{width:auto;margin-top:4px}.option:has(input:checked){border-color:#2878a8;background:#eef7fc}
+pre{direction:ltr;text-align:left;background:#101827;color:#e6edf7;padding:13px;border-radius:10px;overflow:auto}
+.progress{height:9px;background:#e4eaf2;border-radius:20px;overflow:hidden;margin:12px 0}.bar{height:100%;background:#2384b5;width:0}
+.hidden{display:none}.result{font-size:22px;font-weight:bold;color:#1769aa}.muted{color:#64748b;font-size:14px}
+.feedback{padding:10px;border-radius:9px;margin:8px 0;background:#f1f5f9}
+.good{background:#e8f7ee}.bad{background:#fff0f0}
+.actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+@media(max-width:520px){body{padding:10px}.card{padding:15px}.hero{padding:19px}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>اختبار البرمجة بلغة بايثون</h1>
+<p>القوائم وصفوف البيانات (Lists & Tuples) — الصف الثالث المتوسط</p>
+</header>
+
+<section class="card" id="intro">
+<h2>بيانات الطالب</h2>
+<label for="student">اسم الطالب رباعيًا</label><input id="student" placeholder="اكتب اسمك رباعيًا" autocomplete="name">
+<label for="className">الفصل</label>
+<select id="className"><option value="">اختر الفصل</option><option>3/3</option><option>4/3</option><option>5/3</option></select>
+<p class="muted">عدد الأسئلة: 20 سؤالًا — الدرجة: 20 — اختر إجابة واحدة لكل سؤال.</p>
+<button class="primary" onclick="startQuiz()">ابدأ الاختبار</button>
+</section>
+
+<section class="card hidden" id="quiz">
+<div class="qhead"><span id="counter"></span><span>الدرجة: 20</span></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div id="questionArea"></div>
+<div class="actions"><button class="secondary" id="prev" onclick="move(-1)">السابق</button><button class="primary" id="next" onclick="move(1)">التالي</button></div>
+</section>
+
+<section class="card hidden" id="result">
+<h2>نتيجة الاختبار</h2>
+<p id="studentResult"></p><p class="result" id="score"></p>
+<p id="remark"></p>
+<h3>مراجعة الإجابات</h3><div id="review"></div>
+<button class="primary" onclick="window.print()">طباعة النتيجة</button>
+<button class="secondary" onclick="location.reload()">إعادة الاختبار</button>
+</section>
+</div>
+<script>
+const questions = [
+{q:"ما الرمز المستخدم لإنشاء قائمة في بايثون؟",o:["( )","[ ]","{ }","< >"],a:1,e:"تُكتب عناصر القائمة بين الأقواس المربعة [ ]."},
+{q:"أيّ مما يأتي يمثل قائمة صحيحة؟",o:["أرقام = (1, 2, 3)","أرقام = [1, 2, 3]","أرقام = {1; 2; 3}","أرقام = <1, 2, 3>"],a:1,e:"القائمة تُنشأ باستخدام الأقواس المربعة."},
+{q:"ما فهرس العنصر الأول في القائمة؟",o:["1","-1","0","2"],a:2,e:"يبدأ الفهرس في بايثون من الصفر."},
+{q:"ما ناتج الكود التالي؟",code:"الألوان = ['أحمر', 'أزرق', 'أخضر']\nprint(الألوان[1])",o:["أحمر","أزرق","أخضر","1"],a:1,e:"الفهرس 1 يشير إلى العنصر الثاني."},
+{q:"أي دالة تُستخدم لإضافة عنصر إلى نهاية القائمة؟",o:["append()","remove()","sort()","pop()"],a:0,e:"append() تضيف عنصرًا في نهاية القائمة."},
+{q:"ما وظيفة الدالة len()؟",o:["حذف القائمة","ترتيب العناصر","إرجاع عدد العناصر","إضافة عنصر"],a:2,e:"len() تعيد عدد عناصر القائمة."},
+{q:"ما ناتج الكود؟",code:"أ = [2, 4, 6]\nأ.append(8)\nprint(len(أ))",o:["3","4","8","20"],a:1,e:"أصبحت القائمة تضم أربعة عناصر."},
+{q:"أي تعليمة تحذف القيمة 4 من القائمة (إذا كانت موجودة)؟",o:["أ.insert(4)","أ.remove(4)","أ.append(4)","أ.len(4)"],a:1,e:"remove(4) تحذف أول ظهور للقيمة 4."},
+{q:"ماذا تفعل الدالة pop() عند استخدامها دون تحديد فهرس؟",o:["تحذف آخر عنصر وتعيده","تحذف أول عنصر","ترتب القائمة","تضيف عنصرًا"],a:0,e:"تحذف pop() آخر عنصر افتراضيًا وتعيد قيمته."},
+{q:"ما ناتج الكود؟",code:"أ = [10, 20, 30]\nprint(أ[-1])",o:["10","20","30","خطأ"],a:2,e:"الفهرس -1 يشير إلى آخر عنصر."},
+{q:"ما الخاصية الأساسية التي تميز صف البيانات (Tuple)؟",o:["يمكن تغيير عناصره دائمًا","لا يمكن تغيير عناصره بعد إنشائه","لا يحتوي إلا على أعداد","يُكتب بالأقواس المربعة"],a:1,e:"صف البيانات غير قابل للتغيير بعد إنشائه."},
+{q:"أيّ مما يأتي يمثل صف بيانات؟",o:["س = [1, 2, 3]","س = {1, 2, 3}","س = (1, 2, 3)","س = <1, 2, 3>"],a:2,e:"غالبًا يُنشأ Tuple باستخدام الأقواس الدائرية."},
+{q:"ما ناتج الكود؟",code:"بيانات = (5, 7, 9)\nprint(بيانات[0])",o:["5","7","9","0"],a:0,e:"الفهرس صفر يشير إلى أول عنصر."},
+{q:"صح أم خطأ: يمكن استخدام الفهرسة للوصول إلى عناصر القائمة وصف البيانات.",o:["صح","خطأ"],a:0,e:"يمكن الوصول إلى العناصر باستخدام الفهرسة في كليهما."},
+{q:"صح أم خطأ: يمكن تعديل عنصر داخل Tuple بعد إنشائه مباشرة.",o:["صح","خطأ"],a:1,e:"Tuple غير قابل للتغيير."},
+{q:"ما ناتج الكود؟",code:"أ = [1, 2, 3]\nأ[0] = 9\nprint(أ)",o:["[1, 2, 3]","[9, 2, 3]","[1, 9, 3]","خطأ"],a:1,e:"يمكن تغيير عناصر القائمة باستخدام الفهرس."},
+{q:"أي دالة تُستخدم لإدراج عنصر في موضع محدد داخل القائمة؟",o:["insert()","append()","len()","count()"],a:0,e:"insert(الفهرس، القيمة) تدرج عنصرًا في موضع محدد."},
+{q:"ما ناتج الكود؟",code:"أ = [3, 1, 2]\nأ.sort()\nprint(أ)",o:["[3, 1, 2]","[1, 2, 3]","[2, 1, 3]","خطأ"],a:1,e:"sort() ترتب عناصر القائمة تصاعديًا افتراضيًا."},
+{q:"ما ناتج الكود؟",code:"أ = [4, 4, 2, 4]\nprint(أ.count(4))",o:["1","2","3","4"],a:2,e:"القيمة 4 تظهر ثلاث مرات."},
+{q:"أي عبارة صحيحة عند المقارنة بين List و Tuple؟",o:["كلاهما لا يقبل الفهرسة","القائمة قابلة للتعديل وTuple غير قابل للتعديل","Tuple يُكتب دائمًا بأقواس مربعة","القائمة لا تقبل إلا النصوص"],a:1,e:"القائمة قابلة للتغيير، أما Tuple فلا يمكن تغيير عناصره بعد إنشائه."}
+];
+let current=0, answers=Array(questions.length).fill(null), student="", cls="";
+function startQuiz(){
+ student=document.getElementById("student").value.trim(); cls=document.getElementById("className").value;
+ if(!student || !cls){alert("يرجى كتابة اسم الطالب رباعيًا واختيار الفصل.");return;}
+ document.getElementById("intro").classList.add("hidden");document.getElementById("quiz").classList.remove("hidden");render();
+}
+function render(){
+ const q=questions[current];document.getElementById("counter").textContent=`السؤال ${current+1} من ${questions.length}`;
+ document.getElementById("bar").style.width=((current+1)/questions.length*100)+"%";
+ let h=`<div class="question">${current+1}. ${q.q}</div>`;
+ if(q.code)h+=`<pre>${q.code}</pre>`;
+ h+=q.o.map((v,i)=>`<label class="option"><input type="radio" name="answer" value="${i}" ${answers[current]===i?"checked":""} onchange="answers[${current}]=${i}"><span>${v}</span></label>`).join("");
+ document.getElementById("questionArea").innerHTML=h;
+ document.getElementById("prev").style.visibility=current===0?"hidden":"visible";
+ document.getElementById("next").textContent=current===questions.length-1?"إنهاء الاختبار":"التالي";
+}
+function move(d){
+ if(d===1 && answers[current]===null){alert("يرجى اختيار إجابة قبل الانتقال.");return;}
+ if(current===questions.length-1 && d===1){finish();return;}
+ current=Math.max(0,Math.min(questions.length-1,current+d));render();
+}
+function finish(){
+ const score=questions.reduce((s,q,i)=>s+(answers[i]===q.a?1:0),0);
+ document.getElementById("quiz").classList.add("hidden");document.getElementById("result").classList.remove("hidden");
+ document.getElementById("studentResult").textContent=`الطالب: ${student} — الفصل: ${cls}`;
+ document.getElementById("score").textContent=`درجتك: ${score} من 20`;
+ document.getElementById("remark").textContent=score>=18?"ممتاز! أداء رائع.":score>=14?"جيد جدًا، واصل التقدم.":score>=10?"أداء جيد، راجع الإجابات لتحسين مستواك.":"راجع الدرس وحاول مرة أخرى.";
+ document.getElementById("review").innerHTML=questions.map((q,i)=>`<div class="feedback ${answers[i]===q.a?"good":"bad"}"><b>س${i+1}: ${q.q}</b><br>إجابتك: ${answers[i]===null?"لم تتم الإجابة":q.o[answers[i]]}<br>الإجابة الصحيحة: ${q.o[q.a]}<br><span class="muted">${q.e}</span></div>`).join("");
+}
+</script>
+</body></html>
